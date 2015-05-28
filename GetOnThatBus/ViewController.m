@@ -9,22 +9,38 @@
 #import "ViewController.h"
 #import <MapKit/MapKit.h>
 #import "BusStop.h"
+#import "EventViewController.h"
 
 @interface ViewController () <MKMapViewDelegate>
 
 @property (weak, nonatomic) IBOutlet MKMapView *mapView;
 
-@property MKPointAnnotation *annotation;
 @property NSDictionary *json;
+
+@property NSMutableArray *busses;
+
+@property MKCoordinateRegion region; //where the map will start
+
+@property EventViewController *evc;
 
 @end
 
 @implementation ViewController
 
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    self.json = [NSDictionary new];
+    self.evc = [EventViewController new];
+    self.busses = [NSMutableArray new];
+    [super viewWillAppear:animated];
+    self.region = MKCoordinateRegionMake( (CLLocationCoordinate2DMake(41.876438, -87.631905) ),MKCoordinateSpanMake(.20, .20));
+    self.mapView.delegate = self;
+    [self.mapView setRegion:self.region];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.annotation = [MKPointAnnotation new];
-    self.json = [NSDictionary new];
     [self loadJson];
 }
 
@@ -39,8 +55,8 @@
         for (NSDictionary *busStop in self.json)
         {
             BusStop *bus = [[BusStop alloc] initWithJSONDictionary:busStop];
-            NSLog(@"hello");
             [self addPoint:bus];
+            [self.busses addObject:bus];
         }
     }];
 }
@@ -50,7 +66,11 @@
 {
     MKPointAnnotation *point = [MKPointAnnotation new];
     point.coordinate = CLLocationCoordinate2DMake(bus.latitude, bus.longitude);
+    point.title = [NSString stringWithFormat:@"Stop Number: %@",bus._id];
     [self.mapView addAnnotation:point];
+
+
+//    [self.evc initWithBusStop:bus];
 }
 
 
@@ -62,5 +82,20 @@
     pin.rightCalloutAccessoryView = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
     return pin;
 }
+
+-(void)mapView:(MKMapView *)mapView annotationView:(MKAnnotationView *)view calloutAccessoryControlTapped:(UIControl *)control
+{
+//    MKCoordinateRegion region = MKCoordinateRegionMake(view.annotation.coordinate, MKCoordinateSpanMake(0.01, 0.01));
+//    [self.mapView setRegion:region animated:YES];
+    [self performSegueWithIdentifier:@"bus" sender:view];
+
+}
+
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(MKAnnotationView *)sender
+{
+    self.evc = segue.destinationViewController;
+}
+
 
 @end

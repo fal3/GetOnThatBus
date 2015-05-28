@@ -16,7 +16,6 @@
     {
         [self parseJSONDictionary:dic];
     }
-
     return self;
 }
 
